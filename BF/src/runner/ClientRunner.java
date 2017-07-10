@@ -13,7 +13,7 @@ public class ClientRunner {
 	private RemoteHelper remoteHelper;
 	
 	public ClientRunner() {
-		linkToServer();
+		//linkToServer();
 		initGUI();
 	}
 	

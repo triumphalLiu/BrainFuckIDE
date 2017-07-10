@@ -1,4 +1,4 @@
-//服务器IOService的Stub，内容相同
+//鏈嶅姟鍣↖OService鐨凷tub锛屽唴瀹圭浉鍚�
 package service;
 
 import java.rmi.Remote;
