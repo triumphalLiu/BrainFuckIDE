@@ -46,9 +46,9 @@ public class MainFrame extends JFrame {
 	private JPasswordField jtext2;
 	public void LoginFrame() {
 		jframe = new JDialog(frame,"LoginDialog",true);
-		jlab1 = new JLabel("«Î ‰»Î’À∫≈√‹¬Î");
-		jlab2 = new JLabel("’À∫≈");
-		jlab3 = new JLabel("√‹¬Î");
+		jlab1 = new JLabel("Input ID/PW");
+		jlab2 = new JLabel("ID");
+		jlab3 = new JLabel("PW");
 		jbu1 = new JButton("OK");
 		jbu2 = new JButton("Cancel");
 		jtext1 = new JTextField();
@@ -269,7 +269,7 @@ public class MainFrame extends JFrame {
 						JOptionPane.showMessageDialog(null, "Wrong ID/PW", "ERROR", JOptionPane.ERROR_MESSAGE);
 					else {
 						JOptionPane.showMessageDialog(null, "Login Successfully", "FINISH", JOptionPane.INFORMATION_MESSAGE);
-						CurrentUser = UserID;
+						CurrentUser = UserID;CurrentFile = "";
 						resultLabel.setText("CurrentUser:"+CurrentUser);
 					}
 				}
@@ -290,7 +290,8 @@ public class MainFrame extends JFrame {
 						JOptionPane.showMessageDialog(null, "Error Happened When Logout", "ERROR", JOptionPane.ERROR_MESSAGE);
 					else {
 						JOptionPane.showMessageDialog(null, "Logout Successfully", "FINISH", JOptionPane.INFORMATION_MESSAGE);
-						CurrentUser = "";
+						CurrentUser = "";CurrentFile = "";
+						textArea.setText("");
 						resultLabel.setText("CurrentUser:NULL");
 					}
 				}
@@ -374,9 +375,6 @@ public class MainFrame extends JFrame {
 					boolean rtn = RemoteHelper.getInstance().getIOService().writeFile(code, CurrentUser, CurrentFile);
 					if(rtn == true) {
 						JOptionPane.showMessageDialog(null, "Save Successfully");
-						textArea.setEditable(false);
-						CurrentFile = "";
-						resultLabel.setText("CurrentUser:"+CurrentUser+"  "+"CurrentFile:NULL");	
 					}
 					else
 						JOptionPane.showMessageDialog(null, "Error When Save File");
@@ -430,6 +428,18 @@ public class MainFrame extends JFrame {
 				textArea.setEditable(false);
 				inputArea.setEditable(true);
 				inputArea.setText("Input Params Here");
+				String rtn = null;
+				try {
+					rtn = RemoteHelper.getInstance().getExecuteService().execute(textArea.getText(), inputArea.getText());
+				} catch (RemoteException e1) {
+					e1.printStackTrace();
+				}
+				if(rtn == null)
+					outputArea.setText("Run Error");
+				else
+					outputArea.setText("Result= "+rtn);
+				inputArea.setEditable(false);
+				resultLabel.setText("CurrentUser:"+CurrentUser+"  "+"CurrentFile:"+CurrentFile+"  "+"Run Finished");
 			} 
 		}
 	}

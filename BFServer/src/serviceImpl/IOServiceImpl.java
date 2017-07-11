@@ -48,6 +48,7 @@ public class IOServiceImpl implements IOService{
 			    buffer += line;
 			    buffer += "\n"; 
 			}
+			fr.close();
 		} catch (IOException e) {
 			e.printStackTrace();
 		}
