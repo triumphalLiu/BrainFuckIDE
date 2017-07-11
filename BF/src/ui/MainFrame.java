@@ -20,6 +20,7 @@ import javax.swing.BoxLayout;
 
 import rmi.RemoteHelper;
 
+import javax.swing.JOptionPane;
 
 public class MainFrame extends JFrame {
 	private JTextArea textArea;
@@ -28,6 +29,7 @@ public class MainFrame extends JFrame {
 	private JLabel resultLabel;
 	private JMenuBar menuBar;
 	private Box box;
+	public String CurrentUser = "";
 	public MainFrame() {
 	//Build Window
 		JFrame frame = new JFrame("BrainFuckIDE Client");
@@ -50,13 +52,15 @@ public class MainFrame extends JFrame {
 		runMenu.add(runMenuItem);
 		JMenu userMenu = new JMenu("User");
 		menuBar.add(userMenu);
-		JMenuItem changeUserAccountItem = new JMenuItem("Change");
-		userMenu.add(changeUserAccountItem);
+		JMenuItem LOGINUserAccountItem = new JMenuItem("Login");
+		JMenuItem LOGOUTUserAccountItem = new JMenuItem("Logout");
 		JMenuItem createUserAccountItem = new JMenuItem("Create");
-		userMenu.add(createUserAccountItem);
 		JMenuItem modifyUserAccountItem = new JMenuItem("Modify");
-		userMenu.add(modifyUserAccountItem);
 		JMenuItem deleteUserAccountItem = new JMenuItem("Delete");
+		userMenu.add(LOGINUserAccountItem);
+		userMenu.add(LOGOUTUserAccountItem);
+		userMenu.add(createUserAccountItem);
+		userMenu.add(modifyUserAccountItem);
 		userMenu.add(deleteUserAccountItem);
 		frame.setJMenuBar(menuBar);
 	//Text Area
@@ -90,6 +94,11 @@ public class MainFrame extends JFrame {
 		saveMenuItem.addActionListener(new SaveActionListener());
 		exitMenuItem.addActionListener(new MenuItemActionListener());
 		runMenuItem.addActionListener(new MenuItemActionListener());
+		LOGINUserAccountItem.addActionListener(new UserItemActionListener());
+		LOGOUTUserAccountItem.addActionListener(new UserItemActionListener());
+		createUserAccountItem.addActionListener(new UserItemActionListener());
+		modifyUserAccountItem.addActionListener(new UserItemActionListener());
+		deleteUserAccountItem.addActionListener(new UserItemActionListener());
 	//Label Area & Other Settings
 		resultLabel = new JLabel();
 		resultLabel.setText("Ready");
@@ -104,6 +113,10 @@ public class MainFrame extends JFrame {
 		//×Ó²Ëµ¥ÏìÓ¦
 		@Override
 		public void actionPerformed(ActionEvent e) {
+			if(CurrentUser.equals("")) {
+				JOptionPane.showMessageDialog(null, "Please Login First", "WARNING", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
 			String cmd = e.getActionCommand();
 			if (cmd.equals("Open")) {
 				textArea.setText("Opening");
@@ -119,15 +132,116 @@ public class MainFrame extends JFrame {
 			}
 		}
 	}
+	
+	class UserItemActionListener implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			String cmd = e.getActionCommand();
+			if(cmd.equals("Login")) {
+				if(!CurrentUser.equals("")) {
+					JOptionPane.showMessageDialog(null, "Please Logout First", "WARNING", JOptionPane.WARNING_MESSAGE);
+				}
+				else {
+					boolean LogResult = false;
+					String UserID = JOptionPane.showInputDialog(null, "Input Your UserID");
+					String UserPW = JOptionPane.showInputDialog(null, "Input Your Password");
+					try {
+						LogResult = RemoteHelper.getInstance().getUserService().login(UserID, UserPW);
+					} catch (RemoteException e1) {
+						e1.printStackTrace();
+					}
+					if(LogResult == false)
+						JOptionPane.showMessageDialog(null, "Wrong ID/PW", "ERROR", JOptionPane.ERROR_MESSAGE);
+					else {
+						JOptionPane.showMessageDialog(null, "Login Successfully", "FINISH", JOptionPane.INFORMATION_MESSAGE);
+						CurrentUser = UserID;
+					}
+				}
+				return;
+			}
+			else if(cmd.equals("Logout")) {
+				if(CurrentUser.equals("")) {
+					JOptionPane.showMessageDialog(null, "Please Login First", "WARNING", JOptionPane.WARNING_MESSAGE);
+				}
+				else {
+					boolean LogResult = false;
+					try {
+						LogResult = RemoteHelper.getInstance().getUserService().logout(CurrentUser);
+					} catch (RemoteException e1) {
+						e1.printStackTrace();
+					}
+					if(LogResult == false)
+						JOptionPane.showMessageDialog(null, "Error Happened When Logout", "ERROR", JOptionPane.ERROR_MESSAGE);
+					else {
+						JOptionPane.showMessageDialog(null, "Logout Successfully", "FINISH", JOptionPane.INFORMATION_MESSAGE);
+						CurrentUser = "";
+					}
+				}
+				return;
+			}
+			else if(cmd.equals("Create")) {
+				boolean CreateResult = false;
+				String UserID = JOptionPane.showInputDialog(null, "Input Your UserID");
+				String UserPW = JOptionPane.showInputDialog(null, "Input Your Password");
+				try {
+					CreateResult = RemoteHelper.getInstance().getUserService().create(UserID, UserPW);
+				} catch (RemoteException e1) {
+					e1.printStackTrace();
+				}
+				if(CreateResult == false)
+					JOptionPane.showMessageDialog(null, "UserName Has Already Existed", "ERROR", JOptionPane.ERROR_MESSAGE);
+				else 
+					JOptionPane.showMessageDialog(null, "Create Successfully", "FINISH", JOptionPane.INFORMATION_MESSAGE);
+				return;
+			}
+			else if(cmd.equals("Modify")) {
+				boolean ModifyResult = false;
+				String UserID = JOptionPane.showInputDialog(null, "Input Your UserID");
+				String UserPW = JOptionPane.showInputDialog(null, "Input Your Password");
+				String NewUserID = JOptionPane.showInputDialog(null, "Input Your UserID");
+				String NewUserPW = JOptionPane.showInputDialog(null, "Input Your Password");
+				try {
+					ModifyResult = RemoteHelper.getInstance().getUserService().modify(UserID, UserPW, NewUserID, NewUserPW);
+				} catch (RemoteException e1) {
+					e1.printStackTrace();
+				}
+				if(ModifyResult == false)
+					JOptionPane.showMessageDialog(null, "Wrong ID/PW OR UserName Has Already Existed", "ERROR", JOptionPane.ERROR_MESSAGE);
+				else 
+					JOptionPane.showMessageDialog(null, "Modify Successfully", "FINISH", JOptionPane.INFORMATION_MESSAGE);
+				return;
+			}
+			else if(cmd.equals("Delete")) {
+				boolean DelResult = false;
+				String UserID = JOptionPane.showInputDialog(null, "Input Your UserID");
+				String UserPW = JOptionPane.showInputDialog(null, "Input Your Password");
+				try {
+					DelResult = RemoteHelper.getInstance().getUserService().delete(UserID, UserPW);
+				} catch (RemoteException e1) {
+					e1.printStackTrace();
+				}
+				if(DelResult == false)
+					JOptionPane.showMessageDialog(null, "Wrong ID/PW", "ERROR", JOptionPane.ERROR_MESSAGE);
+				else 
+					JOptionPane.showMessageDialog(null, "Delete Successfully", "FINISH", JOptionPane.INFORMATION_MESSAGE);
+				return;
+			}
+		}
+		
+	}
 
 	class SaveActionListener implements ActionListener {
 
 		@Override
 		public void actionPerformed(ActionEvent e) {
+			if(CurrentUser.equals("")) {
+				JOptionPane.showMessageDialog(null, "Please Login First", "WARNING", JOptionPane.ERROR_MESSAGE);
+				return;
+			}
 			resultLabel.setText("Saving");
 			String code = textArea.getText();
 			try {
-				RemoteHelper.getInstance().getIOService().writeFile(code, "admin", "code");
+				RemoteHelper.getInstance().getIOService().writeFile(code, CurrentUser, "code");
 			} catch (RemoteException e1) {
 				e1.printStackTrace();
 			}

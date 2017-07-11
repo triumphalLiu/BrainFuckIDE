@@ -50,4 +50,18 @@ public class DataRemoteObject extends UnicastRemoteObject implements IOService, 
 		return userService.logout(username);
 	}
 
+	@Override
+	public boolean create(String username, String password) throws RemoteException{
+		return userService.create(username, password);
+	}
+
+	@Override
+	public boolean modify(String username, String password, String newuser, String newpw) throws RemoteException{
+		return userService.modify(username, password, newuser, newpw);
+	}
+
+	@Override
+	public boolean delete(String username, String password) throws RemoteException{
+		return userService.delete(username, password);
+	}
 }
