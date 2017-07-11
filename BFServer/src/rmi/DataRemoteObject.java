@@ -64,4 +64,10 @@ public class DataRemoteObject extends UnicastRemoteObject implements IOService, 
 	public boolean delete(String username, String password) throws RemoteException{
 		return userService.delete(username, password);
 	}
+
+	@Override
+	public String newFile(String userId, String filename) throws RemoteException {
+		// TODO Auto-generated method stub
+		return iOService.newFile(userId, filename);
+	}
 }

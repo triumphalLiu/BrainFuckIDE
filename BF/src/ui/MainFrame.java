@@ -2,14 +2,17 @@ package ui;
 
 import java.awt.BorderLayout;
 import java.awt.Color;
+import java.awt.Component;
 import java.awt.FlowLayout;
 import java.awt.Insets;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.rmi.RemoteException;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
@@ -19,17 +22,20 @@ import javax.swing.JTextField;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
+import javax.swing.JComboBox;
 import javax.swing.JDialog;
 
 import rmi.RemoteHelper;
 
 import javax.swing.JOptionPane;
+import javax.swing.JPanel;
 import javax.swing.JPasswordField;
 
 public class MainFrame extends JFrame {
 	public String CurrentUser = "";
+	public String CurrentFile = "";
+	//Login Dialog
 	public boolean ConfirmLogin = false;
-	private JFrame frame;
 	private JDialog jframe;
 	private JLabel jlab1;
 	private JLabel jlab2;
@@ -40,7 +46,7 @@ public class MainFrame extends JFrame {
 	private JPasswordField jtext2;
 	public void LoginFrame() {
 		jframe = new JDialog(frame,"LoginDialog",true);
-		jlab1 = new JLabel("«Îœ»µ«¬º");
+		jlab1 = new JLabel("«Î ‰»Î’À∫≈√‹¬Î");
 		jlab2 = new JLabel("’À∫≈");
 		jlab3 = new JLabel("√‹¬Î");
 		jbu1 = new JButton("OK");
@@ -63,12 +69,45 @@ public class MainFrame extends JFrame {
 		jframe.add(jtext2);
 		jtext2.setBounds(90,90,120,25);
 		jframe.setBounds(500,400,300,200);
-		jframe.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		jframe.setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
 		jbu1.addActionListener(new LoginItemActionListener());
 		jbu2.addActionListener(new LoginItemActionListener());
 		jframe.setVisible(true);
 	}
-
+	//Open Dialog	
+	public boolean ConfirmChoose = false;
+	private JDialog opendialog;
+	private JButton openbu1;
+	private JButton openbu2;
+	private JComboBox<String> openselbox;
+	private JLabel openlab;
+	public void OpenDialog(String str) {
+		opendialog = new JDialog(frame,"OpenDialog",true);
+		openlab = new JLabel("Choose File:");
+	    openselbox = new JComboBox<String>();
+	    String []array = str.split("=");
+	    int len = array.length;
+	    for(int i =0;i<len;++i)
+	    	openselbox.addItem(array[i]);
+	    opendialog.setLayout(null);
+	    opendialog.add(openlab);
+	    openlab.setBounds(30, 20, 80, 40);
+	    opendialog.add(openselbox);
+	    openselbox.setBounds(60, 60, 160, 30);
+		openbu1 = new JButton("OK");
+		openbu2 = new JButton("Cancel");
+		opendialog.add(openbu1);
+		openbu1.setBounds(60,120,70,32);
+		opendialog.add(openbu2);
+		openbu2.setBounds(150,120,70,32);
+		opendialog.setBounds(500,400,300,200);
+		opendialog.setDefaultCloseOperation(JDialog.HIDE_ON_CLOSE);
+		openbu1.addActionListener(new OpenActionListener());
+		openbu2.addActionListener(new OpenActionListener());
+		opendialog.setVisible(true);
+	}
+	//Main Frame
+	private JFrame frame;
 	private JTextArea textArea;
 	private JTextArea inputArea;
 	private JTextArea outputArea;
@@ -115,6 +154,7 @@ public class MainFrame extends JFrame {
 		textArea.setBackground(Color.WHITE);
 		textArea.setLineWrap(true);        
 		textArea.setWrapStyleWord(true);
+		textArea.setEditable(false);
 		frame.add(textArea, BorderLayout.NORTH);
 	//Input Area & Output Area
 		box = new Box(BoxLayout.X_AXIS);
@@ -134,11 +174,11 @@ public class MainFrame extends JFrame {
 		box.add(OUTPUTAREA);
 		frame.getContentPane().add(BorderLayout.CENTER,box);
 	//click and response
-		newMenuItem.addActionListener(new MenuItemActionListener());
-		openMenuItem.addActionListener(new MenuItemActionListener());
+		newMenuItem.addActionListener(new SaveActionListener());
+		openMenuItem.addActionListener(new SaveActionListener());
 		saveMenuItem.addActionListener(new SaveActionListener());
+		runMenuItem.addActionListener(new RunActionListener());
 		exitMenuItem.addActionListener(new MenuItemActionListener());
-		runMenuItem.addActionListener(new MenuItemActionListener());
 		LOGINUserAccountItem.addActionListener(new UserItemActionListener());
 		LOGOUTUserAccountItem.addActionListener(new UserItemActionListener());
 		createUserAccountItem.addActionListener(new UserItemActionListener());
@@ -162,19 +202,6 @@ public class MainFrame extends JFrame {
 			if(cmd.equals("Exit")){
 				System.exit(0);
 			}
-			if(CurrentUser.equals("")) {
-				JOptionPane.showMessageDialog(null, "Please Login First", "WARNING", JOptionPane.ERROR_MESSAGE);
-				return;
-			}
-			if (cmd.equals("Open")) {
-				textArea.setText("Opening");
-			} 
-			else if (cmd.equals("Run")) {
-				resultLabel.setText("Running");
-				textArea.setEditable(false);
-				inputArea.setEditable(true);
-				inputArea.setText("Input Params Here");
-			} 
 		}
 	}
 	
@@ -199,6 +226,21 @@ public class MainFrame extends JFrame {
 			else if(cmd.equals("Cancel")) {
 				ConfirmLogin = false;
 				jframe.setVisible(false);
+			}
+		}
+	}
+	
+	class OpenActionListener implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			String cmd = e.getActionCommand();
+			if(cmd.equals("OK")) {
+				ConfirmChoose = true;
+				opendialog.setVisible(false);
+			}
+			else if(cmd.equals("Cancel")) {
+				ConfirmChoose = false;
+				opendialog.setVisible(false);
 			}
 		}
 	}
@@ -318,21 +360,77 @@ public class MainFrame extends JFrame {
 	}
 
 	class SaveActionListener implements ActionListener {
-
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			if(CurrentUser.equals("")) {
 				JOptionPane.showMessageDialog(null, "Please Login First", "WARNING", JOptionPane.ERROR_MESSAGE);
 				return;
 			}
-			resultLabel.setText("Saving");
-			String code = textArea.getText();
-			try {
-				RemoteHelper.getInstance().getIOService().writeFile(code, CurrentUser, "code");
-			} catch (RemoteException e1) {
-				e1.printStackTrace();
+			String cmd = e.getActionCommand();
+			if(cmd.equals("Save")) {
+				if(CurrentFile == "") return;
+				String code = textArea.getText();
+				try {
+					boolean rtn = RemoteHelper.getInstance().getIOService().writeFile(code, CurrentUser, CurrentFile);
+					if(rtn == true) {
+						JOptionPane.showMessageDialog(null, "Save Successfully");
+						textArea.setEditable(false);
+						CurrentFile = "";
+						resultLabel.setText("CurrentUser:"+CurrentUser+"  "+"CurrentFile:NULL");	
+					}
+					else
+						JOptionPane.showMessageDialog(null, "Error When Save File");
+				} catch (RemoteException e1) {
+					e1.printStackTrace();
+				}
+			}
+			else if (cmd.equals("Open")) {
+				try {
+					String rtn = RemoteHelper.getInstance().getIOService().readFileList(CurrentUser);
+					OpenDialog(rtn);
+					if(ConfirmChoose == false) return;
+					ConfirmChoose = false;
+					CurrentFile = (String) openselbox.getSelectedItem();
+					String content = RemoteHelper.getInstance().getIOService().readFile(CurrentUser, CurrentFile);
+					textArea.setText(content);
+					textArea.setEditable(true);
+					resultLabel.setText("CurrentUser:"+CurrentUser+"  "+"CurrentFile:"+CurrentFile);
+				} catch (RemoteException e1) {
+					e1.printStackTrace();
+				}
+			} 
+			else if(cmd.equals("New")) {
+				String FileName = JOptionPane.showInputDialog(null, "FileName:");
+				if(FileName == null) return;
+				while(FileName.contains(" "))
+					FileName = JOptionPane.showInputDialog(null, "Invalid Name, FileName:");
+				try {
+					String rtn = RemoteHelper.getInstance().getIOService().newFile(CurrentUser, FileName);
+					if(rtn.equals(FileName)) {
+						JOptionPane.showMessageDialog(null, "Create Successfully");
+						CurrentFile = FileName;
+						textArea.setEditable(true);
+						resultLabel.setText("CurrentUser:"+CurrentUser+"  "+"CurrentFile:"+CurrentFile);
+					}
+					else
+						JOptionPane.showMessageDialog(null, "Error When Create New File");
+				} catch (RemoteException e1) {
+					e1.printStackTrace();
+					JOptionPane.showMessageDialog(null, "Error When Create New File");
+				}
 			}
 		}
+	}
 
+	class RunActionListener implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			String cmd = e.getActionCommand();
+			if (cmd.equals("Run")) {
+				textArea.setEditable(false);
+				inputArea.setEditable(true);
+				inputArea.setText("Input Params Here");
+			} 
+		}
 	}
 }
