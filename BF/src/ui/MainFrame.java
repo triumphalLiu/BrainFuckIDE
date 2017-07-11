@@ -15,24 +15,69 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
 import javax.swing.Box;
 import javax.swing.BoxLayout;
+import javax.swing.JButton;
+import javax.swing.JDialog;
 
 import rmi.RemoteHelper;
 
 import javax.swing.JOptionPane;
+import javax.swing.JPasswordField;
 
 public class MainFrame extends JFrame {
+	public String CurrentUser = "";
+	public boolean ConfirmLogin = false;
+	private JFrame frame;
+	private JDialog jframe;
+	private JLabel jlab1;
+	private JLabel jlab2;
+	private JLabel jlab3;
+	private JButton jbu1;
+	private JButton jbu2;
+	private JTextField jtext1;
+	private JPasswordField jtext2;
+	public void LoginFrame() {
+		jframe = new JDialog(frame,"LoginDialog",true);
+		jlab1 = new JLabel("ÇëÏÈµÇÂ¼");
+		jlab2 = new JLabel("ÕËºÅ");
+		jlab3 = new JLabel("ÃÜÂë");
+		jbu1 = new JButton("OK");
+		jbu2 = new JButton("Cancel");
+		jtext1 = new JTextField();
+		jtext2 = new JPasswordField();
+		jframe.setLayout(null);
+		jframe.add(jlab1);
+		jlab1.setBounds(110,20,60,30);
+		jframe.add(jlab2);
+		jlab2.setBounds(60,50,40,25);
+		jframe.add(jlab3);
+		jlab3.setBounds(60,90,40,25);
+		jframe.add(jbu1);
+		jbu1.setBounds(80,120,70,32);
+		jframe.add(jbu2);
+		jbu2.setBounds(160,120,70,32);
+		jframe.add(jtext1);
+		jtext1.setBounds(90,50,120,25);
+		jframe.add(jtext2);
+		jtext2.setBounds(90,90,120,25);
+		jframe.setBounds(500,400,300,200);
+		jframe.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
+		jbu1.addActionListener(new LoginItemActionListener());
+		jbu2.addActionListener(new LoginItemActionListener());
+		jframe.setVisible(true);
+	}
+
 	private JTextArea textArea;
 	private JTextArea inputArea;
 	private JTextArea outputArea;
 	private JLabel resultLabel;
 	private JMenuBar menuBar;
 	private Box box;
-	public String CurrentUser = "";
 	public MainFrame() {
 	//Build Window
-		JFrame frame = new JFrame("BrainFuckIDE Client");
+		frame = new JFrame("BrainFuckIDE Client");
 		frame.setLayout(new BorderLayout());
 	//Menu Area
 		menuBar = new JMenuBar();
@@ -113,11 +158,14 @@ public class MainFrame extends JFrame {
 		//×Ó²Ëµ¥ÏìÓ¦
 		@Override
 		public void actionPerformed(ActionEvent e) {
+			String cmd = e.getActionCommand();
+			if(cmd.equals("Exit")){
+				System.exit(0);
+			}
 			if(CurrentUser.equals("")) {
 				JOptionPane.showMessageDialog(null, "Please Login First", "WARNING", JOptionPane.ERROR_MESSAGE);
 				return;
 			}
-			String cmd = e.getActionCommand();
 			if (cmd.equals("Open")) {
 				textArea.setText("Opening");
 			} 
@@ -127,8 +175,30 @@ public class MainFrame extends JFrame {
 				inputArea.setEditable(true);
 				inputArea.setText("Input Params Here");
 			} 
-			else if(cmd.equals("Exit")){
-				System.exit(0);
+		}
+	}
+	
+	class LoginItemActionListener implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			String cmd = e.getActionCommand();
+			if(cmd.equals("OK")) {
+				String UserID = "";
+				String UserPW = "";
+				UserID = jtext1.getText();
+				UserPW = String.valueOf(jtext2.getPassword());
+				if((UserID.equals("") || UserPW.equals(""))){
+					JOptionPane.showMessageDialog(null, "Input Correct ID/PW!", "Error", JOptionPane.ERROR_MESSAGE);
+					ConfirmLogin = false;
+				}	
+				else {
+					ConfirmLogin = true;
+					jframe.setVisible(false);
+				}
+			}
+			else if(cmd.equals("Cancel")) {
+				ConfirmLogin = false;
+				jframe.setVisible(false);
 			}
 		}
 	}
@@ -142,9 +212,12 @@ public class MainFrame extends JFrame {
 					JOptionPane.showMessageDialog(null, "Please Logout First", "WARNING", JOptionPane.WARNING_MESSAGE);
 				}
 				else {
+					LoginFrame();
+					if(ConfirmLogin == false) return;
+					ConfirmLogin = false;
+					String UserID = jtext1.getText();
+					String UserPW = String.valueOf(jtext2.getPassword());
 					boolean LogResult = false;
-					String UserID = JOptionPane.showInputDialog(null, "Input Your UserID");
-					String UserPW = JOptionPane.showInputDialog(null, "Input Your Password");
 					try {
 						LogResult = RemoteHelper.getInstance().getUserService().login(UserID, UserPW);
 					} catch (RemoteException e1) {
@@ -155,6 +228,7 @@ public class MainFrame extends JFrame {
 					else {
 						JOptionPane.showMessageDialog(null, "Login Successfully", "FINISH", JOptionPane.INFORMATION_MESSAGE);
 						CurrentUser = UserID;
+						resultLabel.setText("CurrentUser:"+CurrentUser);
 					}
 				}
 				return;
@@ -175,14 +249,18 @@ public class MainFrame extends JFrame {
 					else {
 						JOptionPane.showMessageDialog(null, "Logout Successfully", "FINISH", JOptionPane.INFORMATION_MESSAGE);
 						CurrentUser = "";
+						resultLabel.setText("CurrentUser:NULL");
 					}
 				}
 				return;
 			}
 			else if(cmd.equals("Create")) {
+				LoginFrame();
+				if(ConfirmLogin == false) return;
+				ConfirmLogin = false;
+				String UserID = jtext1.getText();
+				String UserPW = String.valueOf(jtext2.getPassword());
 				boolean CreateResult = false;
-				String UserID = JOptionPane.showInputDialog(null, "Input Your UserID");
-				String UserPW = JOptionPane.showInputDialog(null, "Input Your Password");
 				try {
 					CreateResult = RemoteHelper.getInstance().getUserService().create(UserID, UserPW);
 				} catch (RemoteException e1) {
@@ -195,11 +273,17 @@ public class MainFrame extends JFrame {
 				return;
 			}
 			else if(cmd.equals("Modify")) {
+				LoginFrame();
+				if(ConfirmLogin == false) return;
+				ConfirmLogin = false;
+				String UserID = jtext1.getText();
+				String UserPW = String.valueOf(jtext2.getPassword());
+				LoginFrame();
+				if(ConfirmLogin == false) return;
+				ConfirmLogin = false;
+				String NewUserID = jtext1.getText();
+				String NewUserPW = String.valueOf(jtext2.getPassword());
 				boolean ModifyResult = false;
-				String UserID = JOptionPane.showInputDialog(null, "Input Your UserID");
-				String UserPW = JOptionPane.showInputDialog(null, "Input Your Password");
-				String NewUserID = JOptionPane.showInputDialog(null, "Input Your UserID");
-				String NewUserPW = JOptionPane.showInputDialog(null, "Input Your Password");
 				try {
 					ModifyResult = RemoteHelper.getInstance().getUserService().modify(UserID, UserPW, NewUserID, NewUserPW);
 				} catch (RemoteException e1) {
@@ -212,9 +296,12 @@ public class MainFrame extends JFrame {
 				return;
 			}
 			else if(cmd.equals("Delete")) {
+				LoginFrame();
+				if(ConfirmLogin == false) return;
+				ConfirmLogin = false;
+				String UserID = jtext1.getText();
+				String UserPW = String.valueOf(jtext2.getPassword());
 				boolean DelResult = false;
-				String UserID = JOptionPane.showInputDialog(null, "Input Your UserID");
-				String UserPW = JOptionPane.showInputDialog(null, "Input Your Password");
 				try {
 					DelResult = RemoteHelper.getInstance().getUserService().delete(UserID, UserPW);
 				} catch (RemoteException e1) {
