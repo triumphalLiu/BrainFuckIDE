@@ -163,7 +163,7 @@ public class MainFrame extends JFrame {
 		inputArea.setColumns(6);
 		inputArea.setLineWrap(true);        
 		inputArea.setWrapStyleWord(true);
-		inputArea.setEditable(false);
+		inputArea.setEditable(true);
 		outputArea = new JTextArea();
 		outputArea.setRows(2);
 		outputArea.setColumns(6);
@@ -425,9 +425,7 @@ public class MainFrame extends JFrame {
 		public void actionPerformed(ActionEvent e) {
 			String cmd = e.getActionCommand();
 			if (cmd.equals("Run")) {
-				textArea.setEditable(false);
-				inputArea.setEditable(true);
-				inputArea.setText("Input Params Here");
+				textArea.setEditable(true);
 				String rtn = null;
 				try {
 					rtn = RemoteHelper.getInstance().getExecuteService().execute(textArea.getText(), inputArea.getText());
@@ -438,7 +436,6 @@ public class MainFrame extends JFrame {
 					outputArea.setText("Run Error");
 				else
 					outputArea.setText("Result= "+rtn);
-				inputArea.setEditable(false);
 				resultLabel.setText("CurrentUser:"+CurrentUser+"  "+"CurrentFile:"+CurrentFile+"  "+"Run Finished");
 			} 
 		}
