@@ -55,6 +55,21 @@ public class UserServiceImpl implements UserService{
 		File f = new File("user_account");
 		try {
 			FileWriter fw = new FileWriter(f, true);
+			FileReader fr = new FileReader(f); 
+			BufferedReader br = new BufferedReader(fr);
+			String str = null;
+			boolean getid = false;
+			byte i = 0;
+			while((str = br.readLine())!=null) {
+				if(getid == true) {
+					if(str.equals(username))
+						return false;
+					getid = false;
+				}
+				if(str.equals("---")) {
+					getid = true;
+				}
+			}
 			fw.write("---\n"+username+"\n"+password+"\n");
 			fw.flush();
 			fw.close();
@@ -90,6 +105,8 @@ public class UserServiceImpl implements UserService{
 				}
 				if(getid == true) {
 					USERS[i] = str;
+					if(str.equals(newuser)) 
+						return false;
 					getpw = true;
 					getid = false;
 				}
@@ -98,6 +115,9 @@ public class UserServiceImpl implements UserService{
 				}
 			}
 			if(canmodify == false) return false;
+			File dir = new File(username);
+			File newdir = new File(newuser);
+			dir.renameTo(newdir);
 			FileWriter fw = new FileWriter(f, false);
 			fw.flush();
 			fw.close();
@@ -124,6 +144,8 @@ public class UserServiceImpl implements UserService{
 	public boolean delete(String username, String password) throws RemoteException{
 		File f = new File("user_account");
 		try {
+			int delall = JOptionPane.showConfirmDialog(null, "Delete All File Of User " + username + "?");
+			if(delall == 2) return false;
 			String []users = new String[100];
 			String []pws = new String[100];
 			FileReader fr = new FileReader(f); 
@@ -164,10 +186,29 @@ public class UserServiceImpl implements UserService{
 					fw.close();
 				}
 			}
+			if(delall == 0) {
+				File del = new File(username);
+				deleteAll(del);
+			}
 			return true;
 		} catch (IOException e) {
 			e.printStackTrace();
 			return false;
 		}
 	}
+	
+	public static void deleteAll(File path) {
+		File[] files = path.listFiles();
+		if (!path.exists())  
+			return;
+		if (path.isFile()) {  
+			path.delete();
+			return;
+		}
+		for (int i = 0; i < files.length; i++) {
+			deleteAll(files[i]);
+		}
+		path.delete(); 
+	}
+	
 }

@@ -113,6 +113,8 @@ public class MainFrame extends JFrame {
 	private JTextArea outputArea;
 	private JLabel resultLabel;
 	private JMenuBar menuBar;
+	private JMenu versionMenu;
+	private JMenuItem[] VersionItem; 
 	private Box box;
 	public MainFrame() {
 	//Build Window
@@ -128,6 +130,8 @@ public class MainFrame extends JFrame {
 		fileMenu.add(openMenuItem);
 		JMenuItem saveMenuItem = new JMenuItem("Save");
 		fileMenu.add(saveMenuItem);
+		JMenuItem delMenuItem = new JMenuItem("Delete");
+		fileMenu.add(delMenuItem);
 		JMenuItem exitMenuItem = new JMenuItem("Exit");
 		fileMenu.add(exitMenuItem);
 		JMenu runMenu = new JMenu("Run");
@@ -146,6 +150,8 @@ public class MainFrame extends JFrame {
 		userMenu.add(createUserAccountItem);
 		userMenu.add(modifyUserAccountItem);
 		userMenu.add(deleteUserAccountItem);
+		versionMenu = new JMenu("Version");
+		menuBar.add(versionMenu);
 		frame.setJMenuBar(menuBar);
 	//Text Area
 		textArea = new JTextArea();
@@ -155,6 +161,7 @@ public class MainFrame extends JFrame {
 		textArea.setLineWrap(true);        
 		textArea.setWrapStyleWord(true);
 		textArea.setEditable(false);
+		textArea.setText("\n\n\n\n\n\t               Open or Create A File To Edit");
 		frame.add(textArea, BorderLayout.NORTH);
 	//Input Area & Output Area
 		box = new Box(BoxLayout.X_AXIS);
@@ -179,6 +186,7 @@ public class MainFrame extends JFrame {
 		saveMenuItem.addActionListener(new SaveActionListener());
 		runMenuItem.addActionListener(new RunActionListener());
 		exitMenuItem.addActionListener(new MenuItemActionListener());
+		delMenuItem.addActionListener(new SaveActionListener());
 		LOGINUserAccountItem.addActionListener(new UserItemActionListener());
 		LOGOUTUserAccountItem.addActionListener(new UserItemActionListener());
 		createUserAccountItem.addActionListener(new UserItemActionListener());
@@ -194,8 +202,51 @@ public class MainFrame extends JFrame {
 		frame.setVisible(true);
 	}
 
+	private void showVersion() {
+		if(CurrentFile.equals("")) {
+			VersionItem = null;
+			versionMenu.removeAll();
+			return;
+		}
+		File f = new File(CurrentUser + "\\" + CurrentFile);
+		String rtn = null;
+		try {
+			rtn = RemoteHelper.getInstance().getIOService().readFileList(CurrentUser+ "\\" + CurrentFile);
+		} catch (RemoteException e) {
+			e.printStackTrace();
+		}
+		if(rtn != null) {
+			VersionItem = new JMenuItem[10];
+		    String []array = rtn.split("=");
+			for(int i = 0; i < array.length; ++i)
+				for(int j = 1; j < array.length; ++j)
+					if(Double.parseDouble(array[j-1]) < Double.parseDouble(array[j])){
+						String temp = array[j-1];
+						array[j-1] = array[j];
+						array[j] = temp;
+					}
+			int len = array.length;
+		    for(int i =0;i<array.length && i < 10;++i) {
+				VersionItem[i] = new JMenuItem(array[i]);
+				versionMenu.add(VersionItem[i]);
+				VersionItem[i].addActionListener(new VersionActionListener());
+		    }
+		}
+	}
+
+	class VersionActionListener implements ActionListener {
+		@Override
+		public void actionPerformed(ActionEvent e) {
+			String cmd = e.getActionCommand();
+			try {
+				textArea.setText(RemoteHelper.getInstance().getIOService().readFile(CurrentUser, CurrentFile+"\\"+cmd));
+			} catch (RemoteException e1) {
+				e1.printStackTrace();
+			}
+		}
+	}
+	
 	class MenuItemActionListener implements ActionListener {
-		//×Ó²Ëµ¥ÏìÓ¦
 		@Override
 		public void actionPerformed(ActionEvent e) {
 			String cmd = e.getActionCommand();
@@ -270,6 +321,8 @@ public class MainFrame extends JFrame {
 					else {
 						JOptionPane.showMessageDialog(null, "Login Successfully", "FINISH", JOptionPane.INFORMATION_MESSAGE);
 						CurrentUser = UserID;CurrentFile = "";
+						inputArea.setText("");
+						outputArea.setText("");
 						resultLabel.setText("CurrentUser:"+CurrentUser);
 					}
 				}
@@ -291,8 +344,12 @@ public class MainFrame extends JFrame {
 					else {
 						JOptionPane.showMessageDialog(null, "Logout Successfully", "FINISH", JOptionPane.INFORMATION_MESSAGE);
 						CurrentUser = "";CurrentFile = "";
-						textArea.setText("");
+						textArea.setEditable(false);
+						textArea.setText("\n\n\n\n\n\t               Open or Create A File To Edit");
+						inputArea.setText("");
+						outputArea.setText("");
 						resultLabel.setText("CurrentUser:NULL");
+						showVersion() ;
 					}
 				}
 				return;
@@ -334,11 +391,22 @@ public class MainFrame extends JFrame {
 				}
 				if(ModifyResult == false)
 					JOptionPane.showMessageDialog(null, "Wrong ID/PW OR UserName Has Already Existed", "ERROR", JOptionPane.ERROR_MESSAGE);
-				else 
+				else {
 					JOptionPane.showMessageDialog(null, "Modify Successfully", "FINISH", JOptionPane.INFORMATION_MESSAGE);
+					if(CurrentUser.equals(UserID)) {
+						inputArea.setText("");
+						outputArea.setText("");
+						CurrentUser = NewUserID;
+						resultLabel.setText("CurrentUser:"+CurrentUser+"  "+"CurrentFile:"+CurrentFile);
+					}
+				}
 				return;
 			}
 			else if(cmd.equals("Delete")) {
+				if(!CurrentUser.equals("")) {
+					JOptionPane.showMessageDialog(null, "Please Logout First", "WARNING", JOptionPane.WARNING_MESSAGE);
+					return;
+				}
 				LoginFrame();
 				if(ConfirmLogin == false) return;
 				ConfirmLogin = false;
@@ -351,7 +419,7 @@ public class MainFrame extends JFrame {
 					e1.printStackTrace();
 				}
 				if(DelResult == false)
-					JOptionPane.showMessageDialog(null, "Wrong ID/PW", "ERROR", JOptionPane.ERROR_MESSAGE);
+					JOptionPane.showMessageDialog(null, "Wrong ID/PW OR You Canceled", "ERROR", JOptionPane.ERROR_MESSAGE);
 				else 
 					JOptionPane.showMessageDialog(null, "Delete Successfully", "FINISH", JOptionPane.INFORMATION_MESSAGE);
 				return;
@@ -375,6 +443,8 @@ public class MainFrame extends JFrame {
 					boolean rtn = RemoteHelper.getInstance().getIOService().writeFile(code, CurrentUser, CurrentFile);
 					if(rtn == true) {
 						JOptionPane.showMessageDialog(null, "Save Successfully");
+						versionMenu.removeAll();
+						showVersion();
 					}
 					else
 						JOptionPane.showMessageDialog(null, "Error When Save File");
@@ -388,11 +458,17 @@ public class MainFrame extends JFrame {
 					OpenDialog(rtn);
 					if(ConfirmChoose == false) return;
 					ConfirmChoose = false;
+					CurrentFile = "";
+					showVersion();
 					CurrentFile = (String) openselbox.getSelectedItem();
+					if(CurrentFile.equals("")) return;
 					String content = RemoteHelper.getInstance().getIOService().readFile(CurrentUser, CurrentFile);
 					textArea.setText(content);
 					textArea.setEditable(true);
+					inputArea.setText("");
+					outputArea.setText("");
 					resultLabel.setText("CurrentUser:"+CurrentUser+"  "+"CurrentFile:"+CurrentFile);
+					showVersion();
 				} catch (RemoteException e1) {
 					e1.printStackTrace();
 				}
@@ -408,7 +484,9 @@ public class MainFrame extends JFrame {
 						JOptionPane.showMessageDialog(null, "Create Successfully");
 						CurrentFile = FileName;
 						textArea.setEditable(true);
+						textArea.setText("");
 						resultLabel.setText("CurrentUser:"+CurrentUser+"  "+"CurrentFile:"+CurrentFile);
+						showVersion();
 					}
 					else
 						JOptionPane.showMessageDialog(null, "Error When Create New File");
@@ -416,6 +494,29 @@ public class MainFrame extends JFrame {
 					e1.printStackTrace();
 					JOptionPane.showMessageDialog(null, "Error When Create New File");
 				}
+			}
+			else if(cmd.equals("Delete")) {
+				if(CurrentFile == "")return;
+				int del = JOptionPane.showConfirmDialog(null, "Delete " + CurrentFile + "?");
+				boolean rtn = false;
+				if(del == 0)
+					try {
+						rtn = RemoteHelper.getInstance().getIOService().delFile(CurrentUser, CurrentFile);
+						if(rtn == true) {
+							JOptionPane.showMessageDialog(null, "Del Successfully");
+							CurrentFile = "";
+							textArea.setText("");
+							textArea.setEditable(false);
+							inputArea.setText("");
+							outputArea.setText("");
+							resultLabel.setText("CurrentUser:"+CurrentUser+"  "+"CurrentFile:NULL");
+							showVersion();
+						}
+						else
+							JOptionPane.showMessageDialog(null, "Error When Del File");
+					} catch (RemoteException e1) {
+						e1.printStackTrace();
+					}
 			}
 		}
 	}
@@ -425,10 +526,17 @@ public class MainFrame extends JFrame {
 		public void actionPerformed(ActionEvent e) {
 			String cmd = e.getActionCommand();
 			if (cmd.equals("Run")) {
+				if(CurrentUser.equals("")) {
+					JOptionPane.showMessageDialog(null, "Please Login First", "WARNING", JOptionPane.ERROR_MESSAGE);
+					return;
+				}
 				textArea.setEditable(true);
 				String rtn = null;
 				try {
 					rtn = RemoteHelper.getInstance().getExecuteService().execute(textArea.getText(), inputArea.getText());
+					RemoteHelper.getInstance().getIOService().writeFile(textArea.getText(), CurrentUser, CurrentFile);
+					versionMenu.removeAll();
+					showVersion();
 				} catch (RemoteException e1) {
 					e1.printStackTrace();
 				}

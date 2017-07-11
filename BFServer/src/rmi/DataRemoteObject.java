@@ -78,4 +78,9 @@ public class DataRemoteObject extends UnicastRemoteObject implements IOService, 
 	public String execute(String code, String param) throws RemoteException{
 		return executeService.execute(code, param);
 	}
+	
+	@Override
+	public boolean delFile(String UserId, String currentFile) throws RemoteException{
+		return iOService.delFile(UserId, currentFile);
+	}
 }
